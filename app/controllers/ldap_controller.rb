@@ -15,44 +15,53 @@ class LdapController < ApplicationController
   end
 
   def create
-    email = params[:email]
+    id = params[:id]
     password = params[:password]
-    email = email[/\A\w+/].downcase
-    if connect()
-      puts("cn=" + email + ",ou=biciun,dc=arqsoft,dc=unal,dc=edu,dc=co")
-      ldap = Net::LDAP.new(
-        host: "biciun-ldap",
-        port: 389,
-        auth: {
-          method: :simple,
-          dn: "cn=" + email + ",ou=biciun,dc=arqsoft,dc=unal,dc=edu,dc=co",
-          password: password,
-        },
-      )
+    puts("cn=" + id + ",ou=biciun,dc=arqsoft,dc=unal,dc=edu,dc=co")
 
-      if ldap.bind
-        user = User.find_by(:id => email)
-        if user.present?
-          @newAuth = ObjAuth.new(email, password, "true")
-          puts("Autenticación satisfactoria.")
-          render json: @newAuth
-        else
-          puts("Autenticación no satisfactoria, el usuario no se encuentra registrado en la base de datos.")
-          @newAuth = ObjAuth.new(email, password, "false")
-          render json: @newAuth
-        end
-      else
-        puts("No se pudo conectar a LDAP.")
-        @newAuth = ObjAuth.new(email, password, "false")
-        render json: @newAuth
-      end
+    if not connect()
+      puts("No se pudo conectar a LDAP.")
+      @newAuth = ObjAuth.new(id, password, "false")
+      render json: @newAuth
+      return
+    end
+
+    ldap = Net::LDAP.new(
+      host: "biciun-ldap",
+      port: 389,
+      auth: {
+        method: :simple,
+        dn: "cn=" + id + ",ou=biciun,dc=arqsoft,dc=unal,dc=edu,dc=co",
+        password: password,
+      },
+    )
+
+    if not ldap.bind
+      puts("Usuario no esta registrado en ldap.")
+      @newAuth = ObjAuth.new(id, password, "false")
+      render json: @newAuth
+      return
+    end
+
+    user = User.find_by(:id => id)
+
+    if user.present?
+      @newAuth = ObjAuth.new(id, password, "true")
+      puts("Autenticación satisfactoria.")
+      render json: @newAuth
+      return
+    else
+      puts("Autenticación no satisfactoria, el usuario no se encuentra registrado en la base de datos.")
+      @newAuth = ObjAuth.new(id, password, "false")
+      render json: @newAuth
+      return
     end
   end
 end
 
 class ObjAuth
-  def initialize(email, password, answer)
-    @email = email
+  def initialize(id, password, answer)
+    @id = id
     @password = password
     @answer = answer
   end
