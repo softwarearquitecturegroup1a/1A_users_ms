@@ -45,3 +45,6 @@ gem 'therubyracer', :platforms => :ruby
 gem 'execjs'
 
 gem 'net-ldap'
+
+##Gem for SOAP service
+gem 'wash_out'
