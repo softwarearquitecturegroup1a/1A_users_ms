@@ -11,7 +11,7 @@ services:
       MYSQL_DATABASE: users
       MYSQL_HOST: users-db
   users-ms:
-    build: .
+    image: mikeangelo007/users-ms
     command: bash -c "sleep 40 && rm -f tmp/pids/server.pid && bundle exec rails db:migrate && bundle exec rails s -p 3001 -b '0.0.0.0'"
     ports:
       - "3001:3001"
